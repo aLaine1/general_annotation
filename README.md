@@ -2,7 +2,8 @@
 
 This tool was initially thought as a less restrictive alternative to [DEkupl-annotation](https://github.com/Transipedia/dekupl-annotation). So many of its aspects are similar. The tool performs the annotation of a list of contigs.
 
-- [Installation/Usage](#installation)
+- [Usage](#usage)
+- [Installation](#installation)
     - [Option 1: With singularity](#option-1-with-singularity)
     - [Option 2: With Docker](#option-2-with-docker)
     - [Option 3: From source (not recommended)](#option-3-from-source-not-recommended)
@@ -10,9 +11,13 @@ This tool was initially thought as a less restrictive alternative to [DEkupl-ann
 - [Output files](#output-files)
 - [Ontology](#ontology)
 
+## Usage
 
+-   In order to run the tool, you will need 2 specific files:
+    -   Input file : A tsv/csv file, gzip compressed, with at least 2 named columns. One contains the sequences you want to annotate, and each sequence must have a unique identifier. Typical input files are Dekupl-run/Kamrat outputs.
+    -   Config file : As the pipeline is designed with snakemake, any run requires a cinfiguration file. See below for specifications of available parameters.
 
-## Installation/Usage
+## Installation
 
 We recommand tu use [singularity](https://singularity.lbl.gov/) to install the tool. Alternatives are Docker and manual installation.
 
