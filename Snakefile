@@ -18,8 +18,10 @@ DataFrame = pd.core.frame.DataFrame
 
 import script.addBAMData as aBD
 import script.loadGFF as lGFF
-import script.addGFFData as aGFF
+import script.addGFFData as aGFFD
+import script.addCHIMData as aCD
 import script.mergeAnnot as mA
+
 configfile: "config.json"
 
 shell.executable('bash')
@@ -174,13 +176,17 @@ rule primary_alignment:
         threads = MAX_THREADS
     threads: MAX_THREADS
     output:
+        chimeric = OUTPUT_DIR + "/STAR_" + MAP_TO[0] + "/Chimeric.out.junction",
         bam = OUTPUT_DIR + "/STAR_" + MAP_TO[0] + "/Aligned.out.sam",
-        unmapped = OUTPUT_DIR + "/STAR_" + MAP_TO[0] + "/Unmapped.out.mate1"
+        unmapped = OUTPUT_DIR + "/STAR_" + MAP_TO[0] + "/Unmapped.txt",
+        chim_tags = OUTPUT_DIR + "/STAR_" + MAP_TO[0] + "/Chim_tags.txt"
     log :
-        LOG_FOLDER + "/runSTARalignment.log"
+        LOG_FOLDER + "/runSTARalignment"+ MAP_TO[0] +".log"
     run:
         start_log(log[0],"STAR Alignment")
         shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --readFilesCommand gunzip -c --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outReadsUnmapped Fastx --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
+        shell("awk '{{print \">\"$10}}' {params.out_path}Chimeric.out.junction > {output.chim_tags}")
+        shell("set +o pipefail; grep -n -A1 -f {output.chim_tags} {params.out_path}Unmapped.out.mate1 |sed -n 's/^\([0-9]\{{1,\}}\).*/\\1d/p' | sed -f - {params.out_path}Unmapped.out.mate1 > {output.unmapped}")
         end_log(log[0],"STAR Alignment")
 
 
@@ -189,20 +195,24 @@ if len(INDEX) > 1:
         rule: #secondary_aligmnments
             input:
                 star_sa = INDEX[i+1] + "/star/SA",
-                query_fasta = OUTPUT_DIR + "/STAR_" + MAP_TO[i] +"/Unmapped.out.mate1"
+                query_fasta = OUTPUT_DIR + "/STAR_" + MAP_TO[i] +"/Unmapped.txt"
             params:
                 star_index = INDEX[i+1] + "/star",
                 out_path = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] +"/",
                 threads = MAX_THREADS
             threads: MAX_THREADS
             output:
+                chimeric = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] + "/Chimeric.out.junction",
                 bam = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] +"/Aligned.out.sam",
-                unmapped = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] +"/Unmapped.out.mate1"
+                unmapped = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] +"/Unmapped.txt",
+                chim_tags = OUTPUT_DIR + "/STAR_" + MAP_TO[i+1] + "/Chim_tags.txt"
             log :
-                LOG_FOLDER + "/runSTARalignment.log"
+                LOG_FOLDER + "/runSTARalignment"+ MAP_TO[i+1] +".log"
             run:
                 start_log(log[0],"STAR Alignment")
                 shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outReadsUnmapped Fastx --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
+                shell("awk '{{print \">\"$10}}' {params.out_path}Chimeric.out.junction > {output.chim_tags}")
+                shell("set +o pipefail; grep -n -A1 -f {output.chim_tags} {params.out_path}Unmapped.out.mate1 |sed -n 's/^\([0-9]\{{1,\}}\).*/\\1d/p' | sed -f - {params.out_path}Unmapped.out.mate1 > {output.unmapped}")
                 end_log(log[0],"STAR Alignment")
 
 
@@ -214,13 +224,13 @@ rule add_bam_data:
         id_col = UNIQUE_ID_COL,
         reference = "{ref}"
     output:
-        bam_annot = OUTPUT_DIR + "/bam_annotation_{ref}.tsv"
+        bam_annot = temp(OUTPUT_DIR + "/bam_annotation_{ref}.tsv")
     log :
-        LOG_FOLDER + "/addBAMData.log"
+        LOG_FOLDER + "/add_bam_data.log"
     run:
-        start_log(log[0],"addBAMData")
+        start_log(log[0],"add_bam_data")
         aBD.addBAMAnnotation(input.bam,output.bam_annot,params.strand,params.id_col,params.reference)
-        end_log(log[0],"addBAMData")
+        end_log(log[0],"add_bam_data")
 
 
 rule add_gff_data:
@@ -228,19 +238,34 @@ rule add_gff_data:
         unzip_gff = OUTPUT_DIR + "/{ref}_tmp/annotation.gtf",
         bam_annot = OUTPUT_DIR + "/bam_annotation_{ref}.tsv"
     output:
-        gff_annot = OUTPUT_DIR + "/gff_annotation_{ref}.tsv"
+        gff_annot = temp(OUTPUT_DIR + "/gff_annotation_{ref}.tsv")
     params:
         strand = STRAND
     log :
-        LOG_FOLDER + "/addGFFData.log"
+        LOG_FOLDER + "/add_gff_data.log"
     run:
-        start_log(log[0],"addGFFData")
+        start_log(log[0],"add_gff_data")
         annot = lGFF.loadFromGTF(input.unzip_gff)
         add_log(log[0],"Loaded GFF")
         annot_interval = lGFF.loadAnnotation(annot)
         add_log(log[0],"Loaded Interval Tree")
-        aGFF.addGFFAnnotation(input.bam_annot,annot_interval,output.gff_annot,params.strand)
-        end_log(log[0],"addGFFData")
+        aGFFD.addGFFAnnotation(input.bam_annot,annot_interval,output.gff_annot,params.strand)
+        end_log(log[0],"add_gff_data")
+
+rule add_chimeric_data:
+    input:
+        chim_file = OUTPUT_DIR + "/STAR_{ref}/Chimeric.out.junction"
+    output:
+        chim_annot = temp(OUTPUT_DIR + "/chim_annotation_{ref}.tsv")
+    params:
+        id_col = UNIQUE_ID_COL,
+        reference = "{ref}"
+    log :
+        LOG_FOLDER + "/add_chimeric_data.log"
+    run:
+        start_log(log[0],"add_chimeric_data")
+        aCD.extractChimFromFile(input.chim_file,output.chim_annot,params.id_col,params.reference)
+        end_log(log[0],"add_chimeric_data")
 
 if SUPP_MAP_TO:
     for i in range(len(SUPP_MAP_TO)):
@@ -262,13 +287,15 @@ rule merge_annot:
     input:
         bam_annot = expand("{output_dir}/bam_annotation_{ref}.tsv",output_dir=OUTPUT_DIR,ref=MAP_TO),
         gff_annot = expand("{output_dir}/gff_annotation_{ref}.tsv",output_dir=OUTPUT_DIR,ref=MAP_TO),
+        chim_annot = expand("{output_dir}/chim_annotation_{ref}.tsv",output_dir=OUTPUT_DIR,ref=MAP_TO),
         blast_annot = expand("{output_dir}/blast/{ref}.tsv",output_dir=OUTPUT_DIR,ref=SUPP_MAP_TO) if SUPP_MAP_TO else [],
         base_file = SEQUENCE_FILE
     output:
         merged_annot = OUTPUT_DIR + "/merged_annotation.tsv",
         bam_and_gff = temp(OUTPUT_DIR + "/tmp.tsv"),
         bam_all = temp(OUTPUT_DIR + "/bam.tsv"),
-        gff_all = temp(OUTPUT_DIR + "/gff.tsv")
+        gff_all = temp(OUTPUT_DIR + "/gff.tsv"),
+        chim_all = temp(OUTPUT_DIR + "/chim.tsv"),
     params:
         id_col = UNIQUE_ID_COL,
         keep_col = KEEP_COLUMN
@@ -279,5 +306,6 @@ rule merge_annot:
         for i in range(len(MAP_TO)):
             shell("cat {bam_annot} >> {bam_all}".format(bam_annot=input.bam_annot[i],bam_all=output.bam_all))
             shell("cat {gff_annot} >> {gff_all}".format(gff_annot=input.gff_annot[i],gff_all=output.gff_all))
-        shell("paste -d',' {output.bam_all} {output.gff_all} > {output.bam_and_gff}")
-        mA.mergeBAM_GFF(input.base_file,output.bam_and_gff,input.blast_annot,params.id_col,params.keep_col,output.merged_annot)
+            shell("cat {chim_annot} >> {chim_all}".format(chim_annot=input.chim_annot[i],chim_all=output.chim_all))
+        shell("paste -d$'\t' {output.bam_all} {output.gff_all} > {output.bam_and_gff}")
+        mA.mergeAll(input.base_file,output.bam_and_gff,input.blast_annot,output.chim_all,params.id_col,params.keep_col,output.merged_annot)
