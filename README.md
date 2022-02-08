@@ -81,7 +81,10 @@ Your `config.json` should be the only file you have to interact with in order to
 - **map_to**: A list of species/organism on which the tool will try to map your sequences. Mapping is sequential and substractive, meaning if a sequence is mapped on the first organism of the list, we won't try to map it on the second, etc...
 
 - EITHER **[organism]_index**: Path to built index of said organism, if you already used the tool once with this organism.
-- OR **[organism]_fasta & [organism]_gff** : Links to fasta.gz and gtf.gz (respectively) to use to build the index, if it's the first time you use the tool with this organism
+- OR **[organism]_fasta & [organism]_gff** : Links to fasta.gz and gtf.gz* (respectively) to use to build the index, if it's the first time you use the tool with this organism
+
+### *About the GTF
+In the way it's designed, only the "exon" features of the GTF file will be used by this tool. In order for the program to annotate properly, the mandatory attributes (column 9) are : "gene_id", "transcript_id", "gene_type".
 
 ### Optionnal parameters (and default values) :
 - **sequence_col**: (Default :"contig"). Name of the column of your file containing the sequences to annotate.
@@ -95,6 +98,9 @@ Your `config.json` should be the only file you have to interact with in order to
 ## Output file
 
 - Table `merged_annotation.tsv`, summarizing for each contig, its location on the genome (if it's aligned), the sequence alignment informations, and other optionnal alignment informations.
+
+
+
 
 ## Ontology
 
