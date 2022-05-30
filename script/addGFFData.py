@@ -11,9 +11,8 @@ DataFrame = pd.core.frame.DataFrame
 
 from intervaltree import Interval, IntervalTree
 
-
-
 def loadFormerTable(path: str, header=0, dtype=None, **kwargs) -> DataFrame:
+    #File handler
     options = ""
     if ".tsv" in path:
         df = pd.read_csv(path, dtype=dtype, sep="\\t",engine='python')
@@ -21,7 +20,6 @@ def loadFormerTable(path: str, header=0, dtype=None, **kwargs) -> DataFrame:
         df = pd.read_csv(path, dtype=dtype, sep=",",engine='python')
     else:
         sys.exit("Invalid format of input file. Should be a TSV or CSV file (can be gzipped)")
-
     return df
 
 class GenomicIntervalClass:
@@ -46,7 +44,7 @@ def selectBestCanditate(query,result):
     exonic = 0
     intronic = 1
     current_gene = None
-    gene_overlap_length=0
+    gene_overlap_length = 0
 
     for res in result:
         if isinstance(res.data,lGFF.GeneClass):
@@ -74,7 +72,7 @@ def reverseStrand(strand):
 
 def addGFFAnnotation(bam_annot,gff_loaded,output_file,is_stranded):
     GFF_data_raw = []
-    output_index = ["gene_id","gene_symbol","gene_biotype","gene_strand","as_gene_id","as_gene_symbol","as_gene_biotype","as_gene_strand","exonic","intronic"]
+    output_index = ["gene_id","gene_symbol","gene_biotype","gene_strand","as_gene_id","as_gene_symbol","as_gene_biotype","as_gene_strand","is_exonic","is_intronic"]
     former_table = loadFormerTable(bam_annot)
     for index, row in former_table.iterrows():
         chromosome = row["chromosome"]

@@ -28,7 +28,7 @@ def extractFromCIGAR(cigar,strand):
             clipped_5p = cigar[len(cigar)-1][1] if cigar[len(cigar)-1][0] in [4,5] else 0
             clipped_3p = cigar[0][1] if cigar[0][0] in [4,5] else 0
     is_clipped_5p = 1 if clipped_5p != 0 else 0
-    is_clipped_3p = 2 if clipped_5p != 0 else 0
+    is_clipped_3p = 1 if clipped_5p != 0 else 0
 
     for tuple in cigar:
         if tuple[0] in [0,7,8]: #Match
@@ -58,7 +58,7 @@ def getStrandFromFlag(is_stranded,read):
 
 def addBAMAnnotation(bam,output_file,is_stranded,unique_id_col,genome):
     bam_handle = pysam.AlignmentFile(bam)
-    output_index = [unique_id_col,"mapped_to","chromosome","start","end","strand","cigar","nb_ins","nb_del","nb_splice","nb_snv","clipped_5p","clipped_3p","is_clipped_5p","is_clipped_3p","query_cover","alignment_identity","nb_hit","nb_mismatch"]
+    output_index = [unique_id_col,"mapped_to","chromosome","start","end","strand","cigar","nb_ins","nb_del","nb_splice","nb_snv","clipped_5p","clipped_3p","query_cover","alignment_identity","nb_hit","nb_mismatch"]
     BAM_data_raw = []
 
     count = 0
@@ -84,7 +84,7 @@ def addBAMAnnotation(bam,output_file,is_stranded,unique_id_col,genome):
                     nb_mismatch = sup_tag[1]
             nb_snv = nb_mismatch - nb_ins - nb_del
             alignment_identity = (nb_match - nb_mismatch) / query_aln_len
-            new_line_list = [tag,genome,chromosome,str(start),str(end),strand,cigar,str(nb_ins),str(nb_del),str(nb_splice),str(nb_snv),str(clipped_5p),str(clipped_3p),str(is_clipped_5p),str(is_clipped_3p),str(query_cover),str(alignment_identity),str(nb_hit),str(nb_mismatch)]
+            new_line_list = [tag,genome,chromosome,str(start),str(end),strand,cigar,str(nb_ins),str(nb_del),str(nb_splice),str(nb_snv),str(clipped_5p),str(clipped_3p),str(query_cover),str(alignment_identity),str(nb_hit),str(nb_mismatch)]
             BAM_data_raw.append(new_line_list)
 
     BAM_data = pd.DataFrame(BAM_data_raw,columns = output_index)
