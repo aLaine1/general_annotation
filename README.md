@@ -26,7 +26,7 @@ We recommand tu use [singularity](https://singularity.lbl.gov/) to install the t
 - **Step 1: Build Singularity image**
 You can create a singularity container from the docker image.
     ```
-    singularity build general-annot.simg docker://alaine1/gen-annot:1.0.2
+    singularity build general-annot.simg docker://alaine1/gen-annot:1.0.3
     ```
 
 - **Step 2: Create your configuration file**
@@ -45,7 +45,7 @@ Using the parameter "-B /store:/store" will indicate singularity to reference yo
 
 - **Step 1: Retrieve the docker image.**
     ```
-    docker pull alaine1/gen-annot:1.0.2
+    docker pull alaine1/gen-annot:1.0.3
     ```
 - **Step 2: Run**.
     You might need to mount some volumes:
@@ -53,7 +53,7 @@ Using the parameter "-B /store:/store" will indicate singularity to reference yo
     - Any folder referenced in your `config.json`
     The following command is an example working with the `config.json` available in the repository.
     ```
-    sudo docker run -v ${PWD}/config.json:/annot/config.json -v /store:/store alaine1/gen-annot:1.0.1
+    sudo docker run -v ${PWD}/config.json:/annot/config.json -v /store:/store alaine1/gen-annot:1.0.3
     ```
 
 
