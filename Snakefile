@@ -159,7 +159,7 @@ rule create_fasta:
         seq_col = SEQUENCE_COLNAME,
         id_col = UNIQUE_ID_COL
     output:
-        fasta = temp(OUTPUT_DIR + "/query.fa"),
+        fasta = OUTPUT_DIR + "/query.fa",
         fasta_gz = OUTPUT_DIR + "/query.fa.gz"
     run:
         shell("awk -f /annot/script/generate_fasta.awk c1={params.id_col} c2={params.seq_col} <(zcat {input.base_file})> {output.fasta}")
@@ -224,7 +224,7 @@ rule add_bam_data:
         id_col = UNIQUE_ID_COL,
         reference = "{ref}"
     output:
-        bam_annot = temp(OUTPUT_DIR + "/bam_annotation_{ref}.tsv")
+        bam_annot = OUTPUT_DIR + "/bam_annotation_{ref}.tsv"
     log :
         LOG_FOLDER + "/add_bam_data.log"
     run:
@@ -238,7 +238,7 @@ rule add_gff_data:
         unzip_gff = OUTPUT_DIR + "/{ref}_tmp/annotation.gtf",
         bam_annot = OUTPUT_DIR + "/bam_annotation_{ref}.tsv"
     output:
-        gff_annot = temp(OUTPUT_DIR + "/gff_annotation_{ref}.tsv")
+        gff_annot = OUTPUT_DIR + "/gff_annotation_{ref}.tsv"
     params:
         strand = STRAND
     log :
@@ -256,7 +256,7 @@ rule add_chimeric_data:
     input:
         chim_file = OUTPUT_DIR + "/STAR_{ref}/Chimeric.out.junction"
     output:
-        chim_annot = temp(OUTPUT_DIR + "/chim_annotation_{ref}.tsv")
+        chim_annot = OUTPUT_DIR + "/chim_annotation_{ref}.tsv"
     params:
         id_col = UNIQUE_ID_COL,
         reference = "{ref}"
@@ -292,10 +292,10 @@ rule merge_annot:
         base_file = SEQUENCE_FILE
     output:
         merged_annot = OUTPUT_DIR + "/merged_annotation.tsv",
-        bam_and_gff = temp(OUTPUT_DIR + "/tmp.tsv"),
-        bam_all = temp(OUTPUT_DIR + "/bam.tsv"),
-        gff_all = temp(OUTPUT_DIR + "/gff.tsv"),
-        chim_all = temp(OUTPUT_DIR + "/chim.tsv"),
+        bam_and_gff = OUTPUT_DIR + "/tmp.tsv",
+        bam_all = OUTPUT_DIR + "/bam.tsv",
+        gff_all = OUTPUT_DIR + "/gff.tsv",
+        chim_all = OUTPUT_DIR + "/chim.tsv",
     params:
         id_col = UNIQUE_ID_COL,
         keep_col = KEEP_COLUMN
