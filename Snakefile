@@ -184,7 +184,7 @@ rule primary_alignment:
         LOG_FOLDER + "/runSTARalignment"+ MAP_TO[0] +".log"
     run:
         start_log(log[0],"STAR Alignment")
-        shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --readFilesCommand gunzip -c --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outReadsUnmapped Fastx  --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0 --outFilterMismatchNmax 2 --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
+        shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --readFilesCommand gunzip -c --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outFilterMultimapNmax 100 --winAnchorMultimapNmax 200 --outReadsUnmapped Fastx  --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0 --outFilterMismatchNmax 2 --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
         shell("awk '{{print \">\"$10}}' {params.out_path}Chimeric.out.junction > {output.chim_tags}")
         shell("set +o pipefail; grep -n -A1 -f {output.chim_tags} {params.out_path}Unmapped.out.mate1 |sed -n 's/^\([0-9]\{{1,\}}\).*/\\1d/p' | sed -f - {params.out_path}Unmapped.out.mate1 > {output.unmapped}")
         end_log(log[0],"STAR Alignment")
@@ -210,7 +210,7 @@ if len(INDEX) > 1:
                 LOG_FOLDER + "/runSTARalignment"+ MAP_TO[i+1] +".log"
             run:
                 start_log(log[0],"STAR Alignment")
-                shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outReadsUnmapped Fastx --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0 --outFilterMismatchNmax 2 --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
+                shell("STARlong --genomeDir {params.star_index} --runThreadN {params.threads} --readFilesIn {input.query_fasta} --outFileNamePrefix {params.out_path} --outSAMattributes NH NM nM HI AS --outFilterMultimapNmax 100 --winAnchorMultimapNmax 200 --outReadsUnmapped Fastx --outFilterScoreMinOverLread 0 --outFilterMatchNminOverLread 0 --outFilterMismatchNmax 2 --alignIntronMax 100000 --alignSJoverhangMin 10 --chimSegmentMin 12 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --chimSegmentReadGapMax 3 --alignSJstitchMismatchNmax 5 -1 5 5")
                 shell("awk '{{print \">\"$10}}' {params.out_path}Chimeric.out.junction > {output.chim_tags}")
                 shell("set +o pipefail; grep -n -A1 -f {output.chim_tags} {params.out_path}Unmapped.out.mate1 |sed -n 's/^\([0-9]\{{1,\}}\).*/\\1d/p' | sed -f - {params.out_path}Unmapped.out.mate1 > {output.unmapped}")
                 end_log(log[0],"STAR Alignment")
