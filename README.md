@@ -1,6 +1,6 @@
-! Important note ! : This tool is currently under developpement. The version is an early build with the most important features.
+This tool takes a k-mer/contig table as input and produces an annotation file with mapping information for each k-mer/contig including position, intron/exon/intergenic location, gene name, CIGAR etc. Should work with any reference genome and annoattion as input.
 
-This tool was initially thought as a less restrictive alternative to [DEkupl-annotation](https://github.com/Transipedia/dekupl-annotation). So many of its aspects are similar. The tool performs the annotation of a list of contigs.
+This tool was initially thought as a less restrictive alternative to [DEkupl-annotation](https://github.com/Transipedia/dekupl-annotation). So many of its aspects are similar.
 
 - [Usage](#usage)
 - [Installation](#installation)
@@ -13,9 +13,10 @@ This tool was initially thought as a less restrictive alternative to [DEkupl-ann
 
 ## Usage
 
--   In order to run the tool, you will need 2 specific files:
-    -   Input file : A tsv/csv file, gzip compressed, with at least 2 named columns. One contains the sequences you want to annotate, and each sequence must have a unique identifier. Typical input files are Dekupl-run/Kamrat outputs.
+-   In order to run the tool, you will need at least 4 specific files (more if you intend to use multiple organisms):
+    -   Input file : A tsv/csv file with at least 2 named columns. One contains the sequences you want to annotate, and each sequence must have a unique identifier. Typical input files are Dekupl-run/Kamrat outputs.
     -   Config file : As the pipeline is designed with snakemake, any run requires a cinfiguration file. See below for specifications of available parameters.
+    -   Genome and annotation files : Associated fasta and gtf files of an organism, gz.
 
 ## Installation
 
@@ -26,7 +27,7 @@ We recommand tu use [singularity](https://singularity.lbl.gov/) to install the t
 - **Step 1: Build Singularity image**
 You can create a singularity container from the docker image.
     ```
-    singularity build general-annot.simg docker://alaine1/gen-annot:1.0.4
+    singularity build general-annot.simg docker://alaine1/gen-annot:latest
     ```
 
 - **Step 2: Create your configuration file**
@@ -45,7 +46,7 @@ Using the parameter "-B /store:/store" will indicate singularity to reference yo
 
 - **Step 1: Retrieve the docker image.**
     ```
-    docker pull alaine1/gen-annot:1.0.4
+    docker pull alaine1/gen-annot:latest
     ```
 - **Step 2: Run**.
     You might need to mount some volumes:
@@ -53,7 +54,7 @@ Using the parameter "-B /store:/store" will indicate singularity to reference yo
     - Any folder referenced in your `config.json`
     The following command is an example working with the `config.json` available in the repository.
     ```
-    sudo docker run -v ${PWD}/config.json:/annot/config.json -v /store:/store alaine1/gen-annot:1.0.4
+    sudo docker run -v ${PWD}/config.json:/annot/config.json -v /store:/store alaine1/gen-annot:latest
     ```
 
 
@@ -77,11 +78,12 @@ Using the parameter "-B /store:/store" will indicate singularity to reference yo
 Your `config.json` should be the only file you have to interact with in order to run the annotation.
 
 ### Mandatory parameters :
-- **input_file**: Path to the file containing sequences to annotate. (Needs to be .gz for now
+- **input_file**: Path to the file containing sequences to annotate. (TSV/CSV, gz or not)
 - **map_to**: A list of species/organism on which the tool will try to map your sequences. Mapping is sequential and substractive, meaning if a sequence is mapped on the first organism of the list, we won't try to map it on the second, etc...
 
-- EITHER **[organism]_index**: Path to built index of said organism, if you already used the tool once with this organism.
-- OR **[organism]_fasta & [organism]_gff** : Links to fasta.gz and gtf.gz* (respectively) to use to build the index, if it's the first time you use the tool with this organism
+- EITHER **[organism]_fasta & [organism]_gff** : Links to fasta.gz and gtf.gz* (respectively) used to build the index of said organism, if it's the first time you use the tool with this organism
+- OR **[organism]_index**: Path to built index of said organism, if you already used the tool once with this organism.
+
 
 ### *About the GTF
 In the way it's designed, only the "exon" features of the GTF file will be used by this tool. In order for the program to annotate properly, the mandatory attributes (column 9) are : "gene_id", "transcript_id", "gene_type".

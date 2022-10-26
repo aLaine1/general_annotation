@@ -94,11 +94,11 @@ def select_unmapped(ref,output_dir):
     return output_dir + "/STAR_" + ref + "/Unmapped.out.mate1"
 ### ========== Rules ========== ###
 
-# rule all:
-#     input: OUTPUT_DIR + "/annotated sequences.tsv"
-
 rule all:
-    input: OUTPUT_DIR + "/merged_annotation.tsv"
+    input: OUTPUT_DIR + "/query.fa.gz"
+
+#rule all:
+#    input: OUTPUT_DIR + "/merged_annotation.tsv"
 
 BUILD = index_to_create(index_dict)
 INDEX = [index_dict[MAP_TO[i]][1] for i in range(len(MAP_TO))]
@@ -151,10 +151,21 @@ if BUILD:
             for i in range(len(BUILD)):
                 shell("STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {star} --genomeFastaFiles {unzip_fasta} --genomeSAindexNbases 14 -- sjdbGTFfile {unzip_gff}".format(threads=params.threads,star=params.star[i],unzip_fasta=input.unzip_fasta[i],unzip_gff=input.unzip_gff[i]))
 
+if SEQUENCE_FILE.endswith(".gz"):
+    PLAIN_SEQUENCE_FILE = SEQUENCE_FILE[:-3]
+    rule unzip_input:
+        input:
+            base_file = SEQUENCE_FILE
+        output:
+            plain_base_file = temp(PLAIN_SEQUENCE_FILE)
+        run:
+            shell("gunzip -c {input.base_file} > {output.plain_base_file}")
+else:
+    PLAIN_SEQUENCE_FILE = SEQUENCE_FILE
 
 rule create_fasta:
     input:
-        base_file = SEQUENCE_FILE
+        base_file = PLAIN_SEQUENCE_FILE
     params:
         seq_col = SEQUENCE_COLNAME,
         id_col = UNIQUE_ID_COL
@@ -162,7 +173,7 @@ rule create_fasta:
         fasta = temp(OUTPUT_DIR + "/query.fa"),
         fasta_gz = OUTPUT_DIR + "/query.fa.gz"
     run:
-        shell("awk -f /annot/script/generate_fasta.awk c1={params.id_col} c2={params.seq_col} <(zcat {input.base_file})> {output.fasta}")
+        shell("awk -f script/generate_fasta.awk c1={params.id_col} c2={params.seq_col} < {input.base_file}> {output.fasta}")
         shell("gzip -c {output.fasta} > {output.fasta_gz}")
 
 
