@@ -1,3 +1,10 @@
+!!!
+
+THIS REPOSITORY IS NO LONGER SUPPORTED. PLEASE REFER TO THIS PAGE FOR FOLLOWING UPDATED : https://github.com/Transipedia/Annotate-contigs
+
+!!!!
+
+
 This tool takes a k-mer/contig table as input and produces an annotation file with mapping information for each k-mer/contig including position, intron/exon/intergenic location, gene name, CIGAR etc. Should work with any reference genome and annoattion as input.
 
 This tool was initially thought as a less restrictive alternative to [DEkupl-annotation](https://github.com/Transipedia/dekupl-annotation). So many of its aspects are similar.
